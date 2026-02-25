@@ -1,0 +1,611 @@
+{
+  "info": {
+    "name": "Magic Transporters API",
+    "description": "Complete REST API collection for Magic Transporters — manage Magic Movers and their missions.\n\n## Quick Start\n1. Start the server: `docker-compose up --build` or `npm run dev`\n2. Import this collection into Postman\n3. Run requests in order: Create items → Create mover → Load → Start mission → End mission → Top movers\n\n## Variables\n- `baseUrl`: API base URL (default: http://localhost:3000)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "moverId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "itemId1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "itemId2",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Verify the API server is running and healthy."
+          },
+          "response": [
+            {
+              "name": "200 - Healthy",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"ok\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Magic Items",
+      "item": [
+        {
+          "name": "Create Magic Item (Sword)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Item created successfully', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data.name).to.eql('Enchanted Sword');",
+                  "  pm.expect(response.data.weight).to.eql(15);",
+                  "});",
+                  "pm.collectionVariables.set('itemId1', response.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Enchanted Sword\",\n  \"weight\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"]
+            },
+            "description": "Create a new Magic Item. Saves the item ID to `itemId1` collection variable for subsequent requests."
+          },
+          "response": [
+            {
+              "name": "201 - Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"name\": \"Enchanted Sword\",\n    \"weight\": 15,\n    \"_id\": \"60d5ec49f1b2c8b1a8e1e1e1\",\n    \"createdAt\": \"2026-01-01T00:00:00.000Z\",\n    \"updatedAt\": \"2026-01-01T00:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "400 - Validation Error (missing name)",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"type\": \"field\",\n      \"msg\": \"Name is required\",\n      \"path\": \"name\",\n      \"location\": \"body\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Magic Item (Shield)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Item created successfully', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data.name).to.eql('Magic Shield');",
+                  "});",
+                  "pm.collectionVariables.set('itemId2', response.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Magic Shield\",\n  \"weight\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"]
+            },
+            "description": "Create a second Magic Item. Saves the item ID to `itemId2` collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Magic Item - Invalid (missing name)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"]
+            },
+            "description": "Attempt to create an item without a name. Should return 400 validation error."
+          },
+          "response": [
+            {
+              "name": "400 - Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"type\": \"field\",\n      \"msg\": \"Name is required\",\n      \"path\": \"name\",\n      \"location\": \"body\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Magic Item - Invalid (negative weight)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Broken Item\",\n  \"weight\": -5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"]
+            },
+            "description": "Attempt to create an item with negative weight. Should return 400 validation error."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Magic Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array of items', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"]
+            },
+            "description": "Retrieve all Magic Items in the system."
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e1\",\n      \"name\": \"Enchanted Sword\",\n      \"weight\": 15,\n      \"createdAt\": \"2026-01-01T00:00:00.000Z\",\n      \"updatedAt\": \"2026-01-01T00:00:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Magic Movers",
+      "item": [
+        {
+          "name": "Create Magic Mover",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Mover created in resting state', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data.weightLimit).to.eql(100);",
+                  "  pm.expect(response.data.questState).to.eql('resting');",
+                  "  pm.expect(response.data.missionsCompleted).to.eql(0);",
+                  "  pm.expect(response.data.items).to.be.an('array').that.is.empty;",
+                  "});",
+                  "pm.collectionVariables.set('moverId', response.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weightLimit\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers"]
+            },
+            "description": "Create a new Magic Mover with a weight limit of 100. Saves the mover ID to `moverId` collection variable."
+          },
+          "response": [
+            {
+              "name": "201 - Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"weightLimit\": 100,\n    \"questState\": \"resting\",\n    \"items\": [],\n    \"missionsCompleted\": 0,\n    \"_id\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n    \"createdAt\": \"2026-01-01T00:00:00.000Z\",\n    \"updatedAt\": \"2026-01-01T00:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "400 - Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"type\": \"field\",\n      \"msg\": \"Weight limit must be at least 1\",\n      \"path\": \"weightLimit\",\n      \"location\": \"body\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Magic Mover - Invalid (zero weight)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weightLimit\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers"]
+            },
+            "description": "Attempt to create a mover with zero weight limit. Should return 400."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Magic Movers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array of movers', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers"]
+            },
+            "description": "Retrieve all Magic Movers with their loaded items."
+          },
+          "response": []
+        },
+        {
+          "name": "Load Items onto Mover",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Mover is now loading', () => {",
+                  "  pm.expect(response.data.questState).to.eql('loading');",
+                  "  pm.expect(response.data.items.length).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemIds\": [\"{{itemId1}}\", \"{{itemId2}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/{{moverId}}/load",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "{{moverId}}", "load"]
+            },
+            "description": "Load Magic Items onto the Mover. Changes state to 'loading' and creates an activity log."
+          },
+          "response": [
+            {
+              "name": "200 - Items Loaded",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"_id\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n    \"weightLimit\": 100,\n    \"questState\": \"loading\",\n    \"items\": [\n      {\n        \"_id\": \"60d5ec49f1b2c8b1a8e1e1e1\",\n        \"name\": \"Enchanted Sword\",\n        \"weight\": 15\n      }\n    ],\n    \"missionsCompleted\": 0\n  }\n}"
+            },
+            {
+              "name": "400 - Weight Limit Exceeded",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Total weight (150) exceeds weight limit (100)\"\n}"
+            },
+            {
+              "name": "400 - On Mission",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Cannot load items while on a mission\"\n}"
+            },
+            {
+              "name": "404 - Mover Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Magic Mover not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Load Items - Invalid (empty array)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemIds\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/{{moverId}}/load",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "{{moverId}}", "load"]
+            },
+            "description": "Attempt to load with empty item array. Should return 400."
+          },
+          "response": []
+        },
+        {
+          "name": "Load Items - Invalid (bad mover ID)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemIds\": [\"{{itemId1}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/invalid-id/load",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "invalid-id", "load"]
+            },
+            "description": "Attempt to load items with an invalid mover ID format. Should return 400."
+          },
+          "response": []
+        },
+        {
+          "name": "Start Mission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Mover is on-mission', () => {",
+                  "  pm.expect(response.data.questState).to.eql('on-mission');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/{{moverId}}/start-mission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "{{moverId}}", "start-mission"]
+            },
+            "description": "Start a mission for the Mover. Changes state to 'on-mission', prevents further item loading, and creates an activity log."
+          },
+          "response": [
+            {
+              "name": "200 - Mission Started",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"_id\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n    \"weightLimit\": 100,\n    \"questState\": \"on-mission\",\n    \"items\": [...],\n    \"missionsCompleted\": 0\n  }\n}"
+            },
+            {
+              "name": "400 - No Items Loaded",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Cannot start a mission without loading items first\"\n}"
+            },
+            {
+              "name": "400 - Already On Mission",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Mover is already on a mission\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Start Mission - Invalid (no items)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/{{moverId}}/start-mission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "{{moverId}}", "start-mission"]
+            },
+            "description": "Attempt to start a mission when mover is already on-mission (after running 'Start Mission' above). Should return 400."
+          },
+          "response": []
+        },
+        {
+          "name": "End Mission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Mover is resting with incremented missions', () => {",
+                  "  pm.expect(response.data.questState).to.eql('resting');",
+                  "  pm.expect(response.data.items).to.be.an('array').that.is.empty;",
+                  "  pm.expect(response.data.missionsCompleted).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/{{moverId}}/end-mission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "{{moverId}}", "end-mission"]
+            },
+            "description": "End the Mover's mission. Unloads all items, increments missionsCompleted, resets state to 'resting', and creates an activity log."
+          },
+          "response": [
+            {
+              "name": "200 - Mission Ended",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"_id\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n    \"weightLimit\": 100,\n    \"questState\": \"resting\",\n    \"items\": [],\n    \"missionsCompleted\": 1\n  }\n}"
+            },
+            {
+              "name": "400 - Not On Mission",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Mover is not currently on a mission\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "End Mission - Invalid (not on mission)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/{{moverId}}/end-mission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "{{moverId}}", "end-mission"]
+            },
+            "description": "Attempt to end a mission when mover is already resting (after running 'End Mission' above). Should return 400."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Top Movers (Leaderboard)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns sorted array', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "  if (response.data.length > 1) {",
+                  "    pm.expect(response.data[0].missionsCompleted).to.be.at.least(response.data[1].missionsCompleted);",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/top-movers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "top-movers"]
+            },
+            "description": "Get all Magic Movers sorted by number of completed missions in descending order."
+          },
+          "response": [
+            {
+              "name": "200 - Top Movers",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n      \"weightLimit\": 100,\n      \"questState\": \"resting\",\n      \"items\": [],\n      \"missionsCompleted\": 5\n    },\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e3\",\n      \"weightLimit\": 50,\n      \"questState\": \"resting\",\n      \"items\": [],\n      \"missionsCompleted\": 2\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
