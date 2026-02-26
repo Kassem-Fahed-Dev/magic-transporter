@@ -7,6 +7,7 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { injectable, inject } from "tsyringe";
 import { MoverService } from "../services/mover.service";
+import { sendSuccess } from "../utils/response";
 
 /**
  * Controller for Magic Mover endpoints.
@@ -22,18 +23,12 @@ export class MoverController {
    * @route POST /api/magic-movers
    * @param {Request} req - Express request with `{ weightLimit }` in body
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 201 with the created mover, or 500 on error
+   * @returns {Promise<void>} 201 with the created mover
    */
   createMover = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { weightLimit } = req.body;
-      const mover = await this.moverService.createMover(weightLimit);
-      res.status(StatusCodes.CREATED).json({ success: true, data: mover });
-    } catch (error: any) {
-      res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
+    const { weightLimit } = req.body;
+    const mover = await this.moverService.createMover(weightLimit);
+    sendSuccess(res, mover, undefined, StatusCodes.CREATED);
   };
 
   /**
@@ -42,17 +37,11 @@ export class MoverController {
    * @route GET /api/magic-movers
    * @param {Request} _req - Express request (unused)
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 200 with array of movers, or 500 on error
+   * @returns {Promise<void>} 200 with array of movers
    */
   getAllMovers = async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const movers = await this.moverService.getAllMovers();
-      res.status(StatusCodes.OK).json({ success: true, data: movers });
-    } catch (error: any) {
-      res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
+    const movers = await this.moverService.getAllMovers();
+    sendSuccess(res, movers);
   };
 
   /**
@@ -62,23 +51,13 @@ export class MoverController {
    * @route POST /api/magic-movers/:id/load
    * @param {Request} req - Express request with mover ID in params and `{ itemIds }` in body
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 200 with updated mover, 400 on validation error, or 404 if not found
+   * @returns {Promise<void>} 200 with updated mover, 400/404/409/422 on errors
    */
   loadItems = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      const { itemIds } = req.body;
-      const mover = await this.moverService.loadItems(id, itemIds);
-      res.status(StatusCodes.OK).json({ success: true, data: mover });
-    } catch (error: any) {
-      const status =
-        error.message.includes("not found")
-          ? StatusCodes.NOT_FOUND
-          : error.message.includes("Cannot") || error.message.includes("exceeds")
-            ? StatusCodes.BAD_REQUEST
-            : StatusCodes.INTERNAL_SERVER_ERROR;
-      res.status(status).json({ success: false, message: error.message });
-    }
+    const id = req.params.id as string;
+    const { itemIds } = req.body;
+    const mover = await this.moverService.loadItems(id, itemIds);
+    sendSuccess(res, mover);
   };
 
   /**
@@ -88,22 +67,12 @@ export class MoverController {
    * @route PUT /api/magic-movers/:id/start-mission
    * @param {Request} req - Express request with mover ID in params
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 200 with updated mover, 400 on invalid state, or 404 if not found
+   * @returns {Promise<void>} 200 with updated mover, 400/404 on errors
    */
   startMission = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      const mover = await this.moverService.startMission(id);
-      res.status(StatusCodes.OK).json({ success: true, data: mover });
-    } catch (error: any) {
-      const status =
-        error.message.includes("not found")
-          ? StatusCodes.NOT_FOUND
-          : error.message.includes("already") || error.message.includes("Cannot")
-            ? StatusCodes.BAD_REQUEST
-            : StatusCodes.INTERNAL_SERVER_ERROR;
-      res.status(status).json({ success: false, message: error.message });
-    }
+    const id = req.params.id as string;
+    const mover = await this.moverService.startMission(id);
+    sendSuccess(res, mover);
   };
 
   /**
@@ -113,22 +82,12 @@ export class MoverController {
    * @route PUT /api/magic-movers/:id/end-mission
    * @param {Request} req - Express request with mover ID in params
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 200 with updated mover, 400 if not on mission, or 404 if not found
+   * @returns {Promise<void>} 200 with updated mover, 400/404/500 on errors
    */
   endMission = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      const mover = await this.moverService.endMission(id);
-      res.status(StatusCodes.OK).json({ success: true, data: mover });
-    } catch (error: any) {
-      const status =
-        error.message.includes("not found")
-          ? StatusCodes.NOT_FOUND
-          : error.message.includes("not currently")
-            ? StatusCodes.BAD_REQUEST
-            : StatusCodes.INTERNAL_SERVER_ERROR;
-      res.status(status).json({ success: false, message: error.message });
-    }
+    const id = req.params.id as string;
+    const mover = await this.moverService.endMission(id);
+    sendSuccess(res, mover);
   };
 
   /**
@@ -137,16 +96,10 @@ export class MoverController {
    * @route GET /api/magic-movers/top-movers
    * @param {Request} _req - Express request (unused)
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 200 with sorted array of movers, or 500 on error
+   * @returns {Promise<void>} 200 with sorted array of movers
    */
   getTopMovers = async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const movers = await this.moverService.getTopMovers();
-      res.status(StatusCodes.OK).json({ success: true, data: movers });
-    } catch (error: any) {
-      res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
+    const movers = await this.moverService.getTopMovers();
+    sendSuccess(res, movers);
   };
 }

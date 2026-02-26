@@ -152,7 +152,7 @@ describe("Magic Movers API", () => {
         .put(`/api/magic-movers/${mover._id}/start-mission`);
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain("without loading");
+      expect(res.body.message).toContain("from resting state");
     });
 
     it("should reject starting a mission if already on one", async () => {

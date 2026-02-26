@@ -11,6 +11,7 @@ import { swaggerSpec } from "./config/swagger";
 import { errorHandler } from "./middleware/error-handler";
 import moverRoutes from "./routes/mover.routes";
 import itemRoutes from "./routes/item.routes";
+import logRoutes from "./routes/log.routes";
 
 /** Express application instance. */
 const app = express();
@@ -26,6 +27,9 @@ app.use("/api/magic-movers", moverRoutes);
 
 /** Magic Item routes — CRUD. */
 app.use("/api/magic-items", itemRoutes);
+
+/** Activity Log routes — Retrieval of activity logs. */
+app.use("/api/activity-logs", logRoutes);
 
 /** Health check endpoint for monitoring and Docker health checks. */
 app.get("/health", (_req, res) => {

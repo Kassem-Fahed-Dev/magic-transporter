@@ -1,3 +1,8 @@
+/**
+ * @module services/item
+ * @description Business logic layer for Magic Item operations.
+ */
+
 import { injectable, inject } from "tsyringe";
 import { ItemRepository } from "../repositories/item.repository";
 import { IMagicItem } from "../models/magic-item.model";

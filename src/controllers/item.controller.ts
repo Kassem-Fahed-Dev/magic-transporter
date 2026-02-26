@@ -7,6 +7,7 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { injectable, inject } from "tsyringe";
 import { ItemService } from "../services/item.service";
+import { sendSuccess } from "../utils/response";
 
 /**
  * Controller for Magic Item endpoints.
@@ -22,18 +23,12 @@ export class ItemController {
    * @route POST /api/magic-items
    * @param {Request} req - Express request with `{ name, weight }` in body
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 201 with the created item, or 500 on error
+   * @returns {Promise<void>} 201 with the created item
    */
   createItem = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { name, weight } = req.body;
-      const item = await this.itemService.createItem(name, weight);
-      res.status(StatusCodes.CREATED).json({ success: true, data: item });
-    } catch (error: any) {
-      res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
+    const { name, weight } = req.body;
+    const item = await this.itemService.createItem(name, weight);
+    sendSuccess(res, item, undefined, StatusCodes.CREATED);
   };
 
   /**
@@ -42,16 +37,10 @@ export class ItemController {
    * @route GET /api/magic-items
    * @param {Request} _req - Express request (unused)
    * @param {Response} res - Express response
-   * @returns {Promise<void>} 200 with array of items, or 500 on error
+   * @returns {Promise<void>} 200 with array of items
    */
   getAllItems = async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const items = await this.itemService.getAllItems();
-      res.status(StatusCodes.OK).json({ success: true, data: items });
-    } catch (error: any) {
-      res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
-    }
+    const items = await this.itemService.getAllItems();
+    sendSuccess(res, items);
   };
 }

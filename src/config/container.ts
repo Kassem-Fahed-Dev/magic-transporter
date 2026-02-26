@@ -12,6 +12,7 @@ import { ItemRepository } from "../repositories/item.repository";
 import { LogRepository } from "../repositories/log.repository";
 import { MoverService } from "../services/mover.service";
 import { ItemService } from "../services/item.service";
+import { LogService } from "../services/log.service";
 
 /** Register repository singletons (data access layer) */
 container.registerSingleton<MoverRepository>(MoverRepository);
@@ -21,5 +22,6 @@ container.registerSingleton<LogRepository>(LogRepository);
 /** Register service singletons (business logic layer) */
 container.registerSingleton<MoverService>(MoverService);
 container.registerSingleton<ItemService>(ItemService);
+container.registerSingleton<LogService>(LogService);
 
 export { container };

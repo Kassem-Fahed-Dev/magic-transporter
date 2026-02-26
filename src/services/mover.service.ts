@@ -1,9 +1,21 @@
+/**
+ * @module services/mover
+ * @description Business logic layer for Magic Mover operations and mission lifecycle management.
+ */
+
 import { injectable, inject } from "tsyringe";
 import { MoverRepository } from "../repositories/mover.repository";
 import { ItemRepository } from "../repositories/item.repository";
 import { LogRepository } from "../repositories/log.repository";
 import { IMagicMover } from "../models/magic-mover.model";
 import { QuestState } from "../types/enums";
+import {
+  NotFoundError,
+  BadRequestError,
+  ConflictError,
+  UnprocessableEntityError,
+  InternalServerError,
+} from "../errors";
 
 /**
  * Service layer for Magic Mover business logic.
@@ -37,8 +49,9 @@ export class MoverService {
    * Loads items onto a Magic Mover. Validates that:
    * - The mover exists
    * - The mover is not on a mission
-   * - All items exist
-   * - Total weight does not exceed the mover's weight limit
+   * - All items exist and are available (not assigned to another mover)
+   * - No duplicate items in the request
+   * - Total weight does not exceed the mover's weight limit (atomically)
    * @param moverId - The mover's ID
    * @param itemIds - Array of item IDs to load
    * @returns The updated mover
@@ -47,37 +60,65 @@ export class MoverService {
   async loadItems(moverId: string, itemIds: string[]): Promise<IMagicMover> {
     const mover = await this.moverRepository.findById(moverId);
     if (!mover) {
-      throw new Error("Magic Mover not found");
+      throw new NotFoundError("Magic Mover not found");
     }
 
     if (mover.questState === QuestState.ON_MISSION) {
-      throw new Error("Cannot load items while on a mission");
+      throw new BadRequestError("Cannot load items while on a mission");
     }
 
-    const items = await this.itemRepository.findByIds(itemIds);
-    if (items.length !== itemIds.length) {
-      throw new Error("One or more Magic Items not found");
+    // Check for duplicate item IDs in the request
+    const uniqueItemIds = [...new Set(itemIds)];
+    if (uniqueItemIds.length !== itemIds.length) {
+      throw new UnprocessableEntityError("Cannot load duplicate items in the same request");
     }
 
-    const currentWeight = await this.getCurrentWeight(mover);
-    const newWeight = items.reduce((sum, item) => sum + item.weight, 0);
+    // Check if items exist and are available
+    const availableItems = await this.itemRepository.findAvailableByIds(itemIds);
+    if (availableItems.length !== itemIds.length) {
+      const allItems = await this.itemRepository.findByIds(itemIds);
+      if (allItems.length !== itemIds.length) {
+        throw new NotFoundError("One or more Magic Items not found");
+      }
+      throw new ConflictError("One or more items are already assigned to another mover");
+    }
 
-    if (currentWeight + newWeight > mover.weightLimit) {
-      throw new Error(
-        `Total weight (${currentWeight + newWeight}) exceeds weight limit (${mover.weightLimit})`
+    const newWeight = availableItems.reduce((sum, item) => sum + item.weight, 0);
+
+    // Atomically assign items to this mover (ensures no other mover can take them)
+    const assignedCount = await this.itemRepository.assignToMover(itemIds, moverId);
+    if (assignedCount !== itemIds.length) {
+      // Rollback: this shouldn't happen due to the availability check, but handle race condition
+      await this.itemRepository.unassignItems(itemIds);
+      throw new ConflictError("Failed to assign items (they may have been taken by another mover)");
+    }
+
+    // Atomically load items with weight validation
+    const updatedMover = await this.moverRepository.loadItems(
+      moverId,
+      itemIds,
+      newWeight,
+      mover.weightLimit
+    );
+
+    if (!updatedMover) {
+      // Rollback item assignments if weight limit was exceeded
+      await this.itemRepository.unassignItems(itemIds);
+      throw new BadRequestError(
+        `Total weight (${mover.currentWeight + newWeight}) exceeds weight limit (${mover.weightLimit})`
       );
     }
 
-    const updatedMover = await this.moverRepository.loadItems(moverId, itemIds);
     await this.logRepository.create(moverId, QuestState.LOADING, itemIds);
 
-    return updatedMover!;
+    return updatedMover;
   }
 
   /**
    * Starts a mission for a Magic Mover. Validates that:
    * - The mover exists
-   * - The mover is in loading state (has items loaded)
+   * - The mover is in LOADING state (enforces strict state machine)
+   * - The mover has items loaded
    * @param moverId - The mover's ID
    * @returns The updated mover
    * @throws Error if validation fails
@@ -85,15 +126,20 @@ export class MoverService {
   async startMission(moverId: string): Promise<IMagicMover> {
     const mover = await this.moverRepository.findById(moverId);
     if (!mover) {
-      throw new Error("Magic Mover not found");
+      throw new NotFoundError("Magic Mover not found");
     }
 
     if (mover.questState === QuestState.ON_MISSION) {
-      throw new Error("Mover is already on a mission");
+      throw new BadRequestError("Mover is already on a mission");
     }
 
-    if (mover.questState === QuestState.RESTING && mover.items.length === 0) {
-      throw new Error("Cannot start a mission without loading items first");
+    // Enforce strict state machine: must be in LOADING state to start mission
+    if (mover.questState !== QuestState.LOADING) {
+      throw new BadRequestError("Cannot start a mission from resting state. Load items first.");
+    }
+
+    if (mover.items.length === 0) {
+      throw new BadRequestError("Cannot start a mission without items");
     }
 
     const updatedMover = await this.moverRepository.startMission(moverId);
@@ -109,6 +155,8 @@ export class MoverService {
    * Ends a mission for a Magic Mover. Validates that:
    * - The mover exists
    * - The mover is currently on a mission
+   * - All loaded items still exist
+   * Unassigns items so they can be loaded onto other movers.
    * @param moverId - The mover's ID
    * @returns The updated mover
    * @throws Error if validation fails
@@ -116,12 +164,26 @@ export class MoverService {
   async endMission(moverId: string): Promise<IMagicMover> {
     const mover = await this.moverRepository.findById(moverId);
     if (!mover) {
-      throw new Error("Magic Mover not found");
+      throw new NotFoundError("Magic Mover not found");
     }
 
     if (mover.questState !== QuestState.ON_MISSION) {
-      throw new Error("Mover is not currently on a mission");
+      throw new BadRequestError("Mover is not currently on a mission");
     }
+
+    // Validate that all items still exist
+    if (mover.items.length > 0) {
+      const itemIds = mover.items.map((item) =>
+        typeof item === "object" && item._id ? item._id.toString() : item.toString()
+      );
+      const items = await this.itemRepository.findByIds(itemIds);
+      if (items.length !== itemIds.length) {
+        throw new InternalServerError("One or more items no longer exist. Cannot complete mission.");
+      }
+    }
+
+    // Unassign items from this mover (make them available again)
+    await this.itemRepository.unassignFromMover(moverId);
 
     const updatedMover = await this.moverRepository.endMission(moverId);
     await this.logRepository.create(moverId, QuestState.RESTING);
@@ -135,18 +197,5 @@ export class MoverService {
    */
   async getTopMovers(): Promise<IMagicMover[]> {
     return this.moverRepository.findTopMovers();
-  }
-
-  /**
-   * Calculates the current total weight of items loaded on a mover.
-   * @param mover - The mover document (with populated items)
-   * @returns The total weight
-   */
-  private async getCurrentWeight(mover: IMagicMover): Promise<number> {
-    if (mover.items.length === 0) return 0;
-
-    const itemIds = mover.items.map((item) => item.toString());
-    const items = await this.itemRepository.findByIds(itemIds);
-    return items.reduce((sum, item) => sum + item.weight, 0);
   }
 }

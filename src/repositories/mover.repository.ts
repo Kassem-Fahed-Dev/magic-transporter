@@ -1,3 +1,8 @@
+/**
+ * @module repositories/mover
+ * @description Data access layer for Magic Mover CRUD and mission operations.
+ */
+
 import { injectable } from "tsyringe";
 import { MagicMover, IMagicMover } from "../models/magic-mover.model";
 import { QuestState } from "../types/enums";
@@ -42,16 +47,29 @@ export class MoverRepository {
   }
 
   /**
-   * Adds items to a mover and sets state to loading.
+   * Adds items to a mover and sets state to loading using atomic operations.
+   * Uses $addToSet to prevent duplicate items.
    * @param id - The mover's document ID
    * @param itemIds - Array of item IDs to load
-   * @returns The updated mover document
+   * @param totalWeight - Total weight to add atomically
+   * @param weightLimit - Weight limit to validate atomically
+   * @returns The updated mover document or null if weight limit exceeded
    */
-  async loadItems(id: string, itemIds: string[]): Promise<IMagicMover | null> {
-    return MagicMover.findByIdAndUpdate(
-      id,
+  async loadItems(
+    id: string,
+    itemIds: string[],
+    totalWeight: number,
+    weightLimit: number
+  ): Promise<IMagicMover | null> {
+    // Atomic update: only succeeds if current weight + new weight doesn't exceed limit
+    return MagicMover.findOneAndUpdate(
       {
-        $push: { items: { $each: itemIds } },
+        _id: id,
+        $expr: { $lte: [{ $add: ["$currentWeight", totalWeight] }, weightLimit] },
+      },
+      {
+        $addToSet: { items: { $each: itemIds } },
+        $inc: { currentWeight: totalWeight },
         $set: { questState: QuestState.LOADING },
       },
       { returnDocument: "after" }
@@ -72,7 +90,7 @@ export class MoverRepository {
   }
 
   /**
-   * Ends a mission: clears items, increments missionsCompleted, resets state to resting.
+   * Ends a mission: clears items, resets weight, increments missionsCompleted, resets state to resting.
    * @param id - The mover's document ID
    * @returns The updated mover document
    */
@@ -80,7 +98,7 @@ export class MoverRepository {
     return MagicMover.findByIdAndUpdate(
       id,
       {
-        $set: { items: [], questState: QuestState.RESTING },
+        $set: { items: [], questState: QuestState.RESTING, currentWeight: 0 },
         $inc: { missionsCompleted: 1 },
       },
       { returnDocument: "after" }

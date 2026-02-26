@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install express mongoose dotenv swagger-jsdoc swagger-ui-express tsyringe reflect-metadata http-status-codes express-validator)",
       "Bash(curl -s -X POST http://localhost:3000/api/magic-movers -H \"Content-Type: application/json\" -d '{\"\"weightLimit\"\": 100}')",
-      "Bash(curl -s -X POST http://localhost:3000/api/magic-items -H \"Content-Type: application/json\" -d '{\"\"name\"\": \"\"Enchanted Sword\"\", \"\"weight\"\": 15}')"
+      "Bash(curl -s -X POST http://localhost:3000/api/magic-items -H \"Content-Type: application/json\" -d '{\"\"name\"\": \"\"Enchanted Sword\"\", \"\"weight\"\": 15}')",
+      "Bash(curl:*)"
     ]
   }
 }

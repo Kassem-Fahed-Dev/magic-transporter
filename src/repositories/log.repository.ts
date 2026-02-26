@@ -1,3 +1,9 @@
+/**
+ * @module repositories/log
+ * @description Data access layer for Activity Log operations.
+ * Tracks all Magic Mover state transitions and mission activities.
+ */
+
 import { injectable } from "tsyringe";
 import { ActivityLog, IActivityLog } from "../models/activity-log.model";
 import { QuestState } from "../types/enums";
@@ -31,5 +37,15 @@ export class LogRepository {
     return ActivityLog.find({ moverId })
       .sort({ createdAt: -1 })
       .populate("items");
+  }
+
+  /**
+   * Finds all activity logs.
+   * @returns Array of all activity log documents
+   */
+  async findAll(): Promise<IActivityLog[]> {
+    return ActivityLog.find()
+      .sort({ createdAt: -1 })
+      .populate("moverId items");
   }
 }
