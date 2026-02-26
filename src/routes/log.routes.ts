@@ -4,10 +4,10 @@
  */
 
 import { Router } from "express";
-import { param } from "express-validator";
 import { container } from "../config/container";
 import { LogController } from "../controllers/log.controller";
 import { validate } from "../middleware/validate";
+import { getLogsByMoverIdValidators, queryLogsValidators } from "../validators";
 
 const router = Router();
 const controller = container.resolve(LogController);
@@ -17,11 +17,49 @@ const controller = container.resolve(LogController);
  * /api/activity-logs:
  *   get:
  *     summary: Get all activity logs
- *     description: Returns all activity logs from all movers, sorted by creation date (newest first).
+ *     description: Returns all activity logs from all movers. Supports filtering, sorting, and pagination.
  *     tags: [Activity Logs]
+ *     parameters:
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *           enum: [resting, loading, on-mission]
+ *         description: Filter by action type
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter logs created after this date (ISO 8601 format)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter logs created before this date (ISO 8601 format)
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order by creation date (default is desc)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Maximum number of results
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Number of results to skip
  *     responses:
  *       200:
- *         description: List of all activity logs
+ *         description: List of activity logs
  *         content:
  *           application/json:
  *             schema:
@@ -34,6 +72,12 @@ const controller = container.resolve(LogController);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/ActivityLog'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       500:
  *         description: Internal server error
  *         content:
@@ -41,14 +85,14 @@ const controller = container.resolve(LogController);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get("/", controller.getAllLogs);
+router.get("/", [...queryLogsValidators, validate], controller.getAllLogs);
 
 /**
  * @swagger
  * /api/activity-logs/mover/{moverId}:
  *   get:
  *     summary: Get activity logs for a specific mover
- *     description: Returns all activity logs for a given Magic Mover, sorted by creation date (newest first).
+ *     description: Returns all activity logs for a given Magic Mover. Supports filtering, sorting, and pagination.
  *     tags: [Activity Logs]
  *     parameters:
  *       - in: path
@@ -57,6 +101,43 @@ router.get("/", controller.getAllLogs);
  *         schema:
  *           type: string
  *         description: Magic Mover ID (MongoDB ObjectId)
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *           enum: [resting, loading, on-mission]
+ *         description: Filter by action type
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter logs created after this date (ISO 8601 format)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter logs created before this date (ISO 8601 format)
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order by creation date (default is desc)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Maximum number of results
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Number of results to skip
  *     responses:
  *       200:
  *         description: List of activity logs for the mover
@@ -73,7 +154,7 @@ router.get("/", controller.getAllLogs);
  *                   items:
  *                     $ref: '#/components/schemas/ActivityLog'
  *       400:
- *         description: Invalid mover ID format
+ *         description: Invalid mover ID format or validation error
  *         content:
  *           application/json:
  *             schema:
@@ -87,7 +168,7 @@ router.get("/", controller.getAllLogs);
  */
 router.get(
   "/mover/:moverId",
-  [param("moverId").isMongoId().withMessage("Invalid mover ID"), validate],
+  [...getLogsByMoverIdValidators, ...queryLogsValidators, validate],
   controller.getLogsByMoverId
 );
 

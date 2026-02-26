@@ -4,7 +4,7 @@
  */
 
 import { injectable, inject } from "tsyringe";
-import { LogRepository } from "../repositories/log.repository";
+import { LogRepository, LogQueryFilters } from "../repositories/log.repository";
 import { IActivityLog } from "../models/activity-log.model";
 
 /**
@@ -17,19 +17,21 @@ export class LogService {
   ) {}
 
   /**
-   * Retrieves all activity logs.
-   * @returns Array of all logs
+   * Retrieves all activity logs with optional filtering and pagination.
+   * @param filters - Query filters
+   * @returns Array of logs
    */
-  async getAllLogs(): Promise<IActivityLog[]> {
-    return this.logRepository.findAll();
+  async getAllLogs(filters: LogQueryFilters = {}): Promise<IActivityLog[]> {
+    return this.logRepository.findAll(filters);
   }
 
   /**
-   * Retrieves activity logs for a specific mover.
+   * Retrieves activity logs for a specific mover with optional filtering and pagination.
    * @param moverId - The mover's ID
+   * @param filters - Query filters
    * @returns Array of logs for the mover
    */
-  async getLogsByMoverId(moverId: string): Promise<IActivityLog[]> {
-    return this.logRepository.findByMoverId(moverId);
+  async getLogsByMoverId(moverId: string, filters: LogQueryFilters = {}): Promise<IActivityLog[]> {
+    return this.logRepository.findByMoverId(moverId, filters);
   }
 }

@@ -4,7 +4,7 @@
  */
 
 import { injectable, inject } from "tsyringe";
-import { ItemRepository } from "../repositories/item.repository";
+import { ItemRepository, ItemQueryFilters } from "../repositories/item.repository";
 import { IMagicItem } from "../models/magic-item.model";
 
 /**
@@ -27,10 +27,11 @@ export class ItemService {
   }
 
   /**
-   * Retrieves all Magic Items.
-   * @returns Array of all items
+   * Retrieves all Magic Items with optional filtering, sorting, and pagination.
+   * @param filters - Query filters
+   * @returns Array of items
    */
-  async getAllItems(): Promise<IMagicItem[]> {
-    return this.itemRepository.findAll();
+  async getAllItems(filters: ItemQueryFilters = {}): Promise<IMagicItem[]> {
+    return this.itemRepository.findAll(filters);
   }
 }

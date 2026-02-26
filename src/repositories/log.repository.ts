@@ -9,6 +9,18 @@ import { ActivityLog, IActivityLog } from "../models/activity-log.model";
 import { QuestState } from "../types/enums";
 
 /**
+ * Query filters for finding activity logs.
+ */
+export interface LogQueryFilters {
+  action?: QuestState;
+  startDate?: Date;
+  endDate?: Date;
+  sortOrder?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}
+
+/**
  * Repository for Activity Log data access operations.
  */
 @injectable()
@@ -29,23 +41,79 @@ export class LogRepository {
   }
 
   /**
-   * Finds all activity logs for a given mover.
+   * Finds all activity logs for a given mover with optional filtering and pagination.
    * @param moverId - The mover's document ID
+   * @param filters - Query filters
    * @returns Array of activity log documents
    */
-  async findByMoverId(moverId: string): Promise<IActivityLog[]> {
-    return ActivityLog.find({ moverId })
-      .sort({ createdAt: -1 })
-      .populate("items");
+  async findByMoverId(moverId: string, filters: LogQueryFilters = {}): Promise<IActivityLog[]> {
+    const query: any = { moverId };
+
+    // Apply filters
+    if (filters.action) {
+      query.action = filters.action;
+    }
+
+    if (filters.startDate || filters.endDate) {
+      query.createdAt = {};
+      if (filters.startDate) {
+        query.createdAt.$gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        query.createdAt.$lte = filters.endDate;
+      }
+    }
+
+    // Build query with sorting and pagination
+    const sortOrder = filters.sortOrder === "asc" ? 1 : -1;
+    let queryBuilder = ActivityLog.find(query).sort({ createdAt: sortOrder });
+
+    if (filters.offset !== undefined) {
+      queryBuilder = queryBuilder.skip(filters.offset);
+    }
+
+    if (filters.limit !== undefined) {
+      queryBuilder = queryBuilder.limit(filters.limit);
+    }
+
+    return queryBuilder.populate("items", "-assignedTo");
   }
 
   /**
-   * Finds all activity logs.
+   * Finds all activity logs with optional filtering and pagination.
+   * @param filters - Query filters
    * @returns Array of all activity log documents
    */
-  async findAll(): Promise<IActivityLog[]> {
-    return ActivityLog.find()
-      .sort({ createdAt: -1 })
-      .populate("moverId items");
+  async findAll(filters: LogQueryFilters = {}): Promise<IActivityLog[]> {
+    const query: any = {};
+
+    // Apply filters
+    if (filters.action) {
+      query.action = filters.action;
+    }
+
+    if (filters.startDate || filters.endDate) {
+      query.createdAt = {};
+      if (filters.startDate) {
+        query.createdAt.$gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        query.createdAt.$lte = filters.endDate;
+      }
+    }
+
+    // Build query with sorting and pagination
+    const sortOrder = filters.sortOrder === "asc" ? 1 : -1;
+    let queryBuilder = ActivityLog.find(query).sort({ createdAt: sortOrder });
+
+    if (filters.offset !== undefined) {
+      queryBuilder = queryBuilder.skip(filters.offset);
+    }
+
+    if (filters.limit !== undefined) {
+      queryBuilder = queryBuilder.limit(filters.limit);
+    }
+
+    return queryBuilder.populate("moverId").populate("items", "-assignedTo");
   }
 }

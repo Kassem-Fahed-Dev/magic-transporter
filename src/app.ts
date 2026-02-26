@@ -36,6 +36,15 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+/** 404 handler for undefined routes — must be before error handler. */
+app.use((req, res, _next) => {
+  res.status(404).json({
+    success: false,
+    message: `Cannot ${req.method} ${req.originalUrl}`,
+    error: "Route not found",
+  });
+});
+
 /** Global error handler — must be registered last. */
 app.use(errorHandler);
 

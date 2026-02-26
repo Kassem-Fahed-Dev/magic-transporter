@@ -235,6 +235,312 @@
               "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e1\",\n      \"name\": \"Enchanted Sword\",\n      \"weight\": 15,\n      \"createdAt\": \"2026-01-01T00:00:00.000Z\",\n      \"updatedAt\": \"2026-01-01T00:00:00.000Z\"\n    }\n  ]\n}"
             }
           ]
+        },
+        {
+          "name": "Get Available Items (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items?available=true&sortBy=weight&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"],
+              "query": [
+                {
+                  "key": "available",
+                  "value": "true",
+                  "description": "Only show items not assigned to a mover"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "weight",
+                  "description": "Sort by weight"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Ascending order (lightest first)"
+                }
+              ]
+            },
+            "description": "Get only available (unassigned) items, sorted by weight in ascending order."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Items by Weight Range (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items?minWeight=10&maxWeight=50&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"],
+              "query": [
+                {
+                  "key": "minWeight",
+                  "value": "10",
+                  "description": "Minimum weight filter"
+                },
+                {
+                  "key": "maxWeight",
+                  "value": "50",
+                  "description": "Maximum weight filter"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Limit to 20 results"
+                }
+              ]
+            },
+            "description": "Get items with weight between 10 and 50, limited to 20 results."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Items by Name (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-items?name=sword&sortBy=name&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-items"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "sword",
+                  "description": "Search by name (case-insensitive)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name",
+                  "description": "Sort by name"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Alphabetical order"
+                }
+              ]
+            },
+            "description": "Search for items containing 'sword' in their name, sorted alphabetically."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Activity Logs",
+      "item": [
+        {
+          "name": "Get All Activity Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array of logs', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity-logs"]
+            },
+            "description": "Retrieve all activity logs from all movers, sorted by creation date (newest first)."
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e4\",\n      \"moverId\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n      \"action\": \"resting\",\n      \"items\": [],\n      \"createdAt\": \"2026-01-01T12:00:00.000Z\"\n    },\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e3\",\n      \"moverId\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n      \"action\": \"on-mission\",\n      \"items\": [],\n      \"createdAt\": \"2026-01-01T11:00:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Mission Logs Only (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity-logs?action=on-mission&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity-logs"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "on-mission",
+                  "description": "Filter by action type"
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Limit to 50 results"
+                }
+              ]
+            },
+            "description": "Get only 'on-mission' activity logs, limited to 50 most recent entries."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Logs by Date Range (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity-logs?startDate=2026-01-01T00:00:00Z&endDate=2026-01-31T23:59:59Z&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity-logs"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Start date (ISO 8601 format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-01-31T23:59:59Z",
+                  "description": "End date (ISO 8601 format)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Chronological order (oldest first)"
+                }
+              ]
+            },
+            "description": "Get activity logs from January 2026, sorted chronologically (oldest first)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Recent Loading Activities (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity-logs?action=loading&limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity-logs"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "loading",
+                  "description": "Only loading activities"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20 results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Start from first result (pagination)"
+                }
+              ]
+            },
+            "description": "Get the 20 most recent loading activities (useful for pagination)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Logs by Mover ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array of logs for specific mover', () => {",
+                  "  pm.expect(response.success).to.be.true;",
+                  "  pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity-logs/mover/{{moverId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity-logs", "mover", "{{moverId}}"]
+            },
+            "description": "Retrieve all activity logs for a specific Magic Mover, sorted by creation date (newest first)."
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e4\",\n      \"moverId\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n      \"action\": \"resting\",\n      \"items\": [],\n      \"createdAt\": \"2026-01-01T12:00:00.000Z\"\n    },\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e3\",\n      \"moverId\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n      \"action\": \"on-mission\",\n      \"items\": [],\n      \"createdAt\": \"2026-01-01T11:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "400 - Invalid Mover ID",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"errors\": [\n    {\n      \"type\": \"field\",\n      \"msg\": \"Invalid mover ID\",\n      \"path\": \"moverId\",\n      \"location\": \"params\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Mover's Mission History (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity-logs/mover/{{moverId}}?action=on-mission&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity-logs", "mover", "{{moverId}}"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "on-mission",
+                  "description": "Only mission start events"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Chronological order"
+                }
+              ]
+            },
+            "description": "Get complete mission history for a mover, chronologically ordered (oldest first)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Logs - Invalid (bad mover ID format)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity-logs/mover/invalid-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity-logs", "mover", "invalid-id"]
+            },
+            "description": "Attempt to get logs with an invalid mover ID format. Should return 400."
+          },
+          "response": []
         }
       ]
     },
@@ -341,6 +647,109 @@
               "path": ["api", "magic-movers"]
             },
             "description": "Retrieve all Magic Movers with their loaded items."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Movers by Quest State (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers?questState=on-mission&sortBy=missionsCompleted&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers"],
+              "query": [
+                {
+                  "key": "questState",
+                  "value": "on-mission",
+                  "description": "Filter by quest state (resting, loading, on-mission)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "missionsCompleted",
+                  "description": "Sort by missions completed"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Descending order"
+                }
+              ]
+            },
+            "description": "Get all movers currently on missions, sorted by experience (missions completed)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Experienced Movers (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers?minMissions=5&sortBy=missionsCompleted&sortOrder=desc&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers"],
+              "query": [
+                {
+                  "key": "minMissions",
+                  "value": "5",
+                  "description": "Minimum 5 missions completed"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "missionsCompleted",
+                  "description": "Sort by missions"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Most experienced first"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Top 10 only"
+                }
+              ]
+            },
+            "description": "Get top 10 most experienced movers with at least 5 completed missions."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Heavy-Duty Movers (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers?minWeightLimit=100&questState=resting&sortBy=weightLimit&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers"],
+              "query": [
+                {
+                  "key": "minWeightLimit",
+                  "value": "100",
+                  "description": "Weight limit >= 100"
+                },
+                {
+                  "key": "questState",
+                  "value": "resting",
+                  "description": "Only available movers"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "weightLimit",
+                  "description": "Sort by capacity"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Highest capacity first"
+                }
+              ]
+            },
+            "description": "Get available movers with high carrying capacity (>= 100), sorted by weight limit."
           },
           "response": []
         },
@@ -604,6 +1013,32 @@
               "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e2\",\n      \"weightLimit\": 100,\n      \"questState\": \"resting\",\n      \"items\": [],\n      \"missionsCompleted\": 5\n    },\n    {\n      \"_id\": \"60d5ec49f1b2c8b1a8e1e1e3\",\n      \"weightLimit\": 50,\n      \"questState\": \"resting\",\n      \"items\": [],\n      \"missionsCompleted\": 2\n    }\n  ]\n}"
             }
           ]
+        },
+        {
+          "name": "Get Top 5 Elite Movers (Filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/magic-movers/top-movers?limit=5&minMissions=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "magic-movers", "top-movers"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Top 5 only"
+                },
+                {
+                  "key": "minMissions",
+                  "value": "10",
+                  "description": "At least 10 missions completed"
+                }
+              ]
+            },
+            "description": "Get the top 5 most experienced movers with at least 10 completed missions."
+          },
+          "response": []
         }
       ]
     }

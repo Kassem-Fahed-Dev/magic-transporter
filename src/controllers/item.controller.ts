@@ -33,14 +33,25 @@ export class ItemController {
 
   /**
    * Retrieves all Magic Items.
+   * Supports filtering, sorting, and pagination via query parameters.
    *
    * @route GET /api/magic-items
-   * @param {Request} _req - Express request (unused)
+   * @param {Request} req - Express request with optional query parameters
    * @param {Response} res - Express response
    * @returns {Promise<void>} 200 with array of items
    */
-  getAllItems = async (_req: Request, res: Response): Promise<void> => {
-    const items = await this.itemService.getAllItems();
+  getAllItems = async (req: Request, res: Response): Promise<void> => {
+    const filters = {
+      available: req.query.available as any,
+      minWeight: req.query.minWeight as any,
+      maxWeight: req.query.maxWeight as any,
+      name: req.query.name as any,
+      sortBy: req.query.sortBy as any,
+      sortOrder: req.query.sortOrder as any,
+      limit: req.query.limit as any,
+      offset: req.query.offset as any,
+    };
+    const items = await this.itemService.getAllItems(filters);
     sendSuccess(res, items);
   };
 }

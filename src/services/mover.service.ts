@@ -4,7 +4,7 @@
  */
 
 import { injectable, inject } from "tsyringe";
-import { MoverRepository } from "../repositories/mover.repository";
+import { MoverRepository, MoverQueryFilters } from "../repositories/mover.repository";
 import { ItemRepository } from "../repositories/item.repository";
 import { LogRepository } from "../repositories/log.repository";
 import { IMagicMover } from "../models/magic-mover.model";
@@ -38,11 +38,12 @@ export class MoverService {
   }
 
   /**
-   * Retrieves all Magic Movers.
-   * @returns Array of all movers
+   * Retrieves all Magic Movers with optional filtering, sorting, and pagination.
+   * @param filters - Query filters
+   * @returns Array of movers
    */
-  async getAllMovers(): Promise<IMagicMover[]> {
-    return this.moverRepository.findAll();
+  async getAllMovers(filters: MoverQueryFilters = {}): Promise<IMagicMover[]> {
+    return this.moverRepository.findAll(filters);
   }
 
   /**
@@ -171,11 +172,13 @@ export class MoverService {
       throw new BadRequestError("Mover is not currently on a mission");
     }
 
+    // Capture item IDs before unassigning (for activity log)
+    const itemIds = mover.items.map((item) =>
+      typeof item === "object" && item._id ? item._id.toString() : item.toString()
+    );
+
     // Validate that all items still exist
-    if (mover.items.length > 0) {
-      const itemIds = mover.items.map((item) =>
-        typeof item === "object" && item._id ? item._id.toString() : item.toString()
-      );
+    if (itemIds.length > 0) {
       const items = await this.itemRepository.findByIds(itemIds);
       if (items.length !== itemIds.length) {
         throw new InternalServerError("One or more items no longer exist. Cannot complete mission.");
@@ -186,16 +189,20 @@ export class MoverService {
     await this.itemRepository.unassignFromMover(moverId);
 
     const updatedMover = await this.moverRepository.endMission(moverId);
-    await this.logRepository.create(moverId, QuestState.RESTING);
+
+    // Log the completed mission with the items that were delivered
+    await this.logRepository.create(moverId, QuestState.RESTING, itemIds);
 
     return updatedMover!;
   }
 
   /**
    * Returns movers sorted by missions completed (descending).
+   * @param limit - Maximum number of results to return
+   * @param minMissions - Minimum missions completed filter
    * @returns Sorted array of movers
    */
-  async getTopMovers(): Promise<IMagicMover[]> {
-    return this.moverRepository.findTopMovers();
+  async getTopMovers(limit?: number, minMissions?: number): Promise<IMagicMover[]> {
+    return this.moverRepository.findTopMovers(limit, minMissions);
   }
 }

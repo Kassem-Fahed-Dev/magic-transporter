@@ -4,10 +4,17 @@
  */
 
 import { Router } from "express";
-import { body, param } from "express-validator";
 import { container } from "../config/container";
 import { MoverController } from "../controllers/mover.controller";
 import { validate } from "../middleware/validate";
+import {
+  createMoverValidators,
+  loadItemsValidators,
+  startMissionValidators,
+  endMissionValidators,
+  queryMoversValidators,
+  queryTopMoversValidators,
+} from "../validators";
 
 const router = Router();
 const controller = container.resolve(MoverController);
@@ -58,27 +65,74 @@ const controller = container.resolve(MoverController);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post(
-  "/",
-  [
-    body("weightLimit")
-      .isFloat({ min: 1 })
-      .withMessage("Weight limit must be at least 1"),
-    validate,
-  ],
-  controller.createMover
-);
+router.post("/", [...createMoverValidators, validate], controller.createMover);
 
 /**
  * @swagger
  * /api/magic-movers:
  *   get:
  *     summary: Get all Magic Movers
- *     description: Returns all Magic Movers with their currently loaded items populated.
+ *     description: Returns all Magic Movers with their currently loaded items populated. Supports filtering, sorting, and pagination.
  *     tags: [Magic Movers]
+ *     parameters:
+ *       - in: query
+ *         name: questState
+ *         schema:
+ *           type: string
+ *           enum: [resting, loading, on-mission]
+ *         description: Filter by quest state
+ *       - in: query
+ *         name: minMissions
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Minimum missions completed
+ *       - in: query
+ *         name: maxMissions
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Maximum missions completed
+ *       - in: query
+ *         name: minWeightLimit
+ *         schema:
+ *           type: number
+ *           minimum: 0
+ *         description: Minimum weight limit
+ *       - in: query
+ *         name: maxWeightLimit
+ *         schema:
+ *           type: number
+ *           minimum: 0
+ *         description: Maximum weight limit
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [missionsCompleted, weightLimit, currentWeight, createdAt]
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Maximum number of results
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Number of results to skip
  *     responses:
  *       200:
- *         description: List of all Magic Movers
+ *         description: List of Magic Movers
  *         content:
  *           application/json:
  *             schema:
@@ -91,6 +145,12 @@ router.post(
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/MagicMover'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       500:
  *         description: Internal server error
  *         content:
@@ -98,15 +158,29 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get("/", controller.getAllMovers);
+router.get("/", [...queryMoversValidators, validate], controller.getAllMovers);
 
 /**
  * @swagger
  * /api/magic-movers/top-movers:
  *   get:
  *     summary: List movers by most missions completed (descending)
- *     description: Returns all Magic Movers sorted by the number of completed missions in descending order. Use this as a leaderboard endpoint.
+ *     description: Returns Magic Movers sorted by the number of completed missions in descending order. Use this as a leaderboard endpoint.
  *     tags: [Magic Movers]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Maximum number of results
+ *       - in: query
+ *         name: minMissions
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Minimum missions completed filter
  *     responses:
  *       200:
  *         description: Sorted list of Magic Movers (most missions first)
@@ -122,6 +196,12 @@ router.get("/", controller.getAllMovers);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/MagicMover'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       500:
  *         description: Internal server error
  *         content:
@@ -129,7 +209,7 @@ router.get("/", controller.getAllMovers);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get("/top-movers", controller.getTopMovers);
+router.get("/top-movers", [...queryTopMoversValidators, validate], controller.getTopMovers);
 
 /**
  * @swagger
@@ -200,18 +280,7 @@ router.get("/top-movers", controller.getTopMovers);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post(
-  "/:id/load",
-  [
-    param("id").isMongoId().withMessage("Invalid mover ID"),
-    body("itemIds")
-      .isArray({ min: 1 })
-      .withMessage("itemIds must be a non-empty array"),
-    body("itemIds.*").isMongoId().withMessage("Each item ID must be a valid ID"),
-    validate,
-  ],
-  controller.loadItems
-);
+router.post("/:id/load", [...loadItemsValidators, validate], controller.loadItems);
 
 /**
  * @swagger
@@ -266,7 +335,7 @@ router.post(
  */
 router.put(
   "/:id/start-mission",
-  [param("id").isMongoId().withMessage("Invalid mover ID"), validate],
+  [...startMissionValidators, validate],
   controller.startMission
 );
 
@@ -323,7 +392,7 @@ router.put(
  */
 router.put(
   "/:id/end-mission",
-  [param("id").isMongoId().withMessage("Invalid mover ID"), validate],
+  [...endMissionValidators, validate],
   controller.endMission
 );
 

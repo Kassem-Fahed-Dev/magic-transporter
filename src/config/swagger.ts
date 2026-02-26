@@ -72,19 +72,32 @@ const options: swaggerJsdoc.Options = {
         ActivityLog: {
           type: "object",
           properties: {
-            _id: { type: "string", description: "MongoDB document ID" },
-            moverId: { type: "string", description: "Reference to the Magic Mover" },
+            _id: { type: "string", description: "MongoDB document ID", example: "60d5ec49f1b2c8b1a8e1e1e4" },
+            moverId: {
+              oneOf: [
+                { type: "string", description: "Magic Mover ID (when not populated)" },
+                { $ref: "#/components/schemas/MagicMover" },
+              ],
+              description: "Reference to the Magic Mover (populated in GET requests)",
+            },
             action: {
               type: "string",
               enum: ["resting", "loading", "on-mission"],
               description: "The state transition that was logged",
+              example: "on-mission",
             },
             items: {
               type: "array",
-              items: { type: "string" },
-              description: "Item IDs involved in this action",
+              items: {
+                oneOf: [
+                  { type: "string", description: "Item ID (when not populated)" },
+                  { $ref: "#/components/schemas/MagicItem" },
+                ],
+              },
+              description: "Magic Items involved in this action (populated in GET requests)",
             },
-            createdAt: { type: "string", format: "date-time", description: "When the action occurred" },
+            createdAt: { type: "string", format: "date-time", description: "When the action occurred", example: "2026-01-01T12:00:00.000Z" },
+            updatedAt: { type: "string", format: "date-time", description: "Last update timestamp" },
           },
         },
         SuccessResponse: {

@@ -343,7 +343,9 @@ describe("Magic Transporters - Full E2E Workflow", () => {
       logs = await ActivityLog.find({ moverId: mover._id }).sort({ createdAt: 1 });
       expect(logs).toHaveLength(3);
       expect(logs[2].action).toBe("resting");
-      expect(logs[2].items).toHaveLength(0);
+      // Resting log should contain the items that were just delivered
+      expect(logs[2].items).toHaveLength(1);
+      expect(logs[2].items.map(id => id.toString())).toContain(item._id);
     });
 
     it("should track items in activity logs correctly", async () => {

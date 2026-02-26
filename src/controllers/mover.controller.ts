@@ -33,14 +33,26 @@ export class MoverController {
 
   /**
    * Retrieves all Magic Movers with their loaded items.
+   * Supports filtering, sorting, and pagination via query parameters.
    *
    * @route GET /api/magic-movers
-   * @param {Request} _req - Express request (unused)
+   * @param {Request} req - Express request with optional query parameters
    * @param {Response} res - Express response
    * @returns {Promise<void>} 200 with array of movers
    */
-  getAllMovers = async (_req: Request, res: Response): Promise<void> => {
-    const movers = await this.moverService.getAllMovers();
+  getAllMovers = async (req: Request, res: Response): Promise<void> => {
+    const filters = {
+      questState: req.query.questState as any,
+      minMissions: req.query.minMissions as any,
+      maxMissions: req.query.maxMissions as any,
+      minWeightLimit: req.query.minWeightLimit as any,
+      maxWeightLimit: req.query.maxWeightLimit as any,
+      sortBy: req.query.sortBy as any,
+      sortOrder: req.query.sortOrder as any,
+      limit: req.query.limit as any,
+      offset: req.query.offset as any,
+    };
+    const movers = await this.moverService.getAllMovers(filters);
     sendSuccess(res, movers);
   };
 
@@ -94,12 +106,14 @@ export class MoverController {
    * Returns all movers sorted by missions completed in descending order.
    *
    * @route GET /api/magic-movers/top-movers
-   * @param {Request} _req - Express request (unused)
+   * @param {Request} req - Express request with optional query parameters (limit, minMissions)
    * @param {Response} res - Express response
    * @returns {Promise<void>} 200 with sorted array of movers
    */
-  getTopMovers = async (_req: Request, res: Response): Promise<void> => {
-    const movers = await this.moverService.getTopMovers();
+  getTopMovers = async (req: Request, res: Response): Promise<void> => {
+    const limit = req.query.limit as any;
+    const minMissions = req.query.minMissions as any;
+    const movers = await this.moverService.getTopMovers(limit, minMissions);
     sendSuccess(res, movers);
   };
 }

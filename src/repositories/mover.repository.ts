@@ -8,6 +8,21 @@ import { MagicMover, IMagicMover } from "../models/magic-mover.model";
 import { QuestState } from "../types/enums";
 
 /**
+ * Query filters for finding movers.
+ */
+export interface MoverQueryFilters {
+  questState?: QuestState;
+  minMissions?: number;
+  maxMissions?: number;
+  minWeightLimit?: number;
+  maxWeightLimit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}
+
+/**
  * Repository for Magic Mover data access operations.
  */
 @injectable()
@@ -27,23 +42,80 @@ export class MoverRepository {
    * @returns The mover document or null
    */
   async findById(id: string): Promise<IMagicMover | null> {
-    return MagicMover.findById(id).populate("items");
+    return MagicMover.findById(id).populate("items", "-assignedTo");
   }
 
   /**
-   * Finds all Magic Movers.
-   * @returns Array of all mover documents
+   * Finds all Magic Movers with optional filtering, sorting, and pagination.
+   * @param filters - Query filters
+   * @returns Array of mover documents
    */
-  async findAll(): Promise<IMagicMover[]> {
-    return MagicMover.find().populate("items");
+  async findAll(filters: MoverQueryFilters = {}): Promise<IMagicMover[]> {
+    const query: any = {};
+
+    // Apply filters
+    if (filters.questState) {
+      query.questState = filters.questState;
+    }
+
+    if (filters.minMissions !== undefined) {
+      query.missionsCompleted = { ...query.missionsCompleted, $gte: filters.minMissions };
+    }
+
+    if (filters.maxMissions !== undefined) {
+      query.missionsCompleted = { ...query.missionsCompleted, $lte: filters.maxMissions };
+    }
+
+    if (filters.minWeightLimit !== undefined) {
+      query.weightLimit = { ...query.weightLimit, $gte: filters.minWeightLimit };
+    }
+
+    if (filters.maxWeightLimit !== undefined) {
+      query.weightLimit = { ...query.weightLimit, $lte: filters.maxWeightLimit };
+    }
+
+    // Build sort object
+    const sort: any = {};
+    if (filters.sortBy) {
+      sort[filters.sortBy] = filters.sortOrder === "asc" ? 1 : -1;
+    } else {
+      sort.createdAt = -1; // Default sort
+    }
+
+    // Build query with pagination
+    let queryBuilder = MagicMover.find(query).sort(sort);
+
+    if (filters.offset !== undefined) {
+      queryBuilder = queryBuilder.skip(filters.offset);
+    }
+
+    if (filters.limit !== undefined) {
+      queryBuilder = queryBuilder.limit(filters.limit);
+    }
+
+    return queryBuilder.populate("items", "-assignedTo");
   }
 
   /**
    * Returns movers sorted by missions completed in descending order.
+   * @param limit - Maximum number of results to return
+   * @param minMissions - Minimum missions completed filter
    * @returns Sorted array of mover documents
    */
-  async findTopMovers(): Promise<IMagicMover[]> {
-    return MagicMover.find().sort({ missionsCompleted: -1 }).populate("items");
+  async findTopMovers(limit?: number, minMissions?: number): Promise<IMagicMover[]> {
+    const query: any = {};
+
+    if (minMissions !== undefined) {
+      query.missionsCompleted = { $gte: minMissions };
+    }
+
+    let queryBuilder = MagicMover.find(query).sort({ missionsCompleted: -1 });
+
+    if (limit !== undefined) {
+      queryBuilder = queryBuilder.limit(limit);
+    }
+
+    return queryBuilder.populate("items", "-assignedTo");
   }
 
   /**
@@ -73,7 +145,7 @@ export class MoverRepository {
         $set: { questState: QuestState.LOADING },
       },
       { returnDocument: "after" }
-    ).populate("items");
+    ).populate("items", "-assignedTo");
   }
 
   /**
@@ -86,7 +158,7 @@ export class MoverRepository {
       id,
       { $set: { questState: QuestState.ON_MISSION } },
       { returnDocument: "after" }
-    ).populate("items");
+    ).populate("items", "-assignedTo");
   }
 
   /**

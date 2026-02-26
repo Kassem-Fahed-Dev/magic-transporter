@@ -28,6 +28,9 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+  // Ensure response is always JSON
+  res.setHeader("Content-Type", "application/json");
+
   // Check if this is one of our custom AppError instances
   if (err instanceof AppError) {
     // Handle operational errors
@@ -42,6 +45,7 @@ export function errorHandler(
         res.status(err.statusCode).json({
           success: false,
           message: validationMessages || err.message,
+          errors: err.errors,
         });
         return;
       }

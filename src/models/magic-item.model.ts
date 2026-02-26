@@ -39,7 +39,24 @@ const MagicItemSchema = new Schema<IMagicItem>(
       default: null,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+    toJSON: {
+      transform: (_doc, ret) => {
+        // Remove __v from response (for existing documents)
+        const { __v, ...rest } = ret;
+        return rest;
+      },
+    },
+    toObject: {
+      transform: (_doc, ret) => {
+        // Remove __v from object conversion
+        const { __v, ...rest } = ret;
+        return rest;
+      },
+    },
+  }
 );
 
 /** Mongoose model for the MagicItem collection. */
