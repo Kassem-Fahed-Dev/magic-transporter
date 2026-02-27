@@ -57,7 +57,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
       // ===== MOVER 1: Complete 2 missions =====
       const mover1Res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Mover 1", weightLimit: 100 });
       expect(mover1Res.status).toBe(201);
       const mover1 = mover1Res.body.data;
       expect(mover1.questState).toBe("resting");
@@ -118,7 +118,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
       // ===== MOVER 2: Complete 1 mission =====
       const mover2Res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 50 });
+        .send({ name: "Mover 2", weightLimit: 50 });
       expect(mover2Res.status).toBe(201);
       const mover2 = mover2Res.body.data;
 
@@ -133,7 +133,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
       // ===== MOVER 3: No missions completed =====
       const mover3Res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 75 });
+        .send({ name: "Mover 3", weightLimit: 75 });
       expect(mover3Res.status).toBe(201);
 
       // ===== VERIFY LEADERBOARD (Top Movers) =====
@@ -160,7 +160,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent loading items that exceed weight limit", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 10 });
+        .send({ name: "Small Mover", weightLimit: 10 });
       const mover = moverRes.body.data;
 
       const heavyItemRes = await request(app)
@@ -179,7 +179,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should allow loading up to exact weight limit", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 25 });
+        .send({ name: "Medium Mover", weightLimit: 25 });
       const mover = moverRes.body.data;
 
       const item1Res = await request(app)
@@ -200,7 +200,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent loading items that exceed weight limit in one request", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 20 });
+        .send({ name: "Limited Mover", weightLimit: 20 });
       const mover = moverRes.body.data;
 
       const item1Res = await request(app)
@@ -227,7 +227,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent loading items while on a mission", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const item1Res = await request(app)
@@ -256,7 +256,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent starting a mission without items", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const startRes = await request(app)
@@ -269,7 +269,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent starting a mission if already on one", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const itemRes = await request(app)
@@ -292,7 +292,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent ending a mission if not on one", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const endRes = await request(app)
@@ -310,7 +310,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should create activity logs for all state transitions", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const itemRes = await request(app)
@@ -351,7 +351,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should track items in activity logs correctly", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const item1Res = await request(app)
@@ -392,7 +392,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should return 404 for non-existent items", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const loadRes = await request(app)
@@ -406,7 +406,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should validate itemIds array is not empty", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const loadRes = await request(app)
@@ -432,7 +432,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should follow the correct state progression: resting → loading → on-mission → resting", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const itemRes = await request(app)
@@ -463,7 +463,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should allow loading multiple items at once in loading state", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const item1Res = await request(app)
@@ -490,7 +490,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent loading duplicate items in the same request", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const itemRes = await request(app)
@@ -510,12 +510,12 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should prevent loading items already assigned to another mover", async () => {
       const mover1Res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover1 = mover1Res.body.data;
 
       const mover2Res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover2 = mover2Res.body.data;
 
       const itemRes = await request(app)
@@ -540,12 +540,12 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should allow loading an item after it's been unassigned (mission ended)", async () => {
       const mover1Res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover1 = mover1Res.body.data;
 
       const mover2Res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover2 = mover2Res.body.data;
 
       const itemRes = await request(app)
@@ -577,7 +577,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should retrieve all activity logs", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const itemRes = await request(app)
@@ -601,7 +601,7 @@ describe("Magic Transporters - Full E2E Workflow", () => {
     it("should retrieve activity logs for a specific mover", async () => {
       const moverRes = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
       const mover = moverRes.body.data;
 
       const itemRes = await request(app)

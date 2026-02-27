@@ -3,10 +3,10 @@ import request from "supertest";
 import app from "../src/app";
 
 /** Helper to create a mover and return the response body data. */
-async function createMover(weightLimit: number) {
+async function createMover(weightLimit: number, name: string = "Test Mover") {
   const res = await request(app)
     .post("/api/magic-movers")
-    .send({ weightLimit });
+    .send({ name, weightLimit });
   return res.body.data;
 }
 
@@ -23,7 +23,7 @@ describe("Magic Movers API", () => {
     it("should create a new magic mover", async () => {
       const res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 100 });
+        .send({ name: "Test Mover", weightLimit: 100 });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
@@ -44,7 +44,16 @@ describe("Magic Movers API", () => {
     it("should return 400 if weightLimit is less than 1", async () => {
       const res = await request(app)
         .post("/api/magic-movers")
-        .send({ weightLimit: 0 });
+        .send({ name: "Test Mover", weightLimit: 0 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it("should return 400 if name is missing", async () => {
+      const res = await request(app)
+        .post("/api/magic-movers")
+        .send({ weightLimit: 100 });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
