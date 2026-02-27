@@ -21,13 +21,13 @@ export class MoverController {
    * Creates a new Magic Mover.
    *
    * @route POST /api/magic-movers
-   * @param {Request} req - Express request with `{ weightLimit }` in body
+   * @param {Request} req - Express request with `{ name, weightLimit }` in body
    * @param {Response} res - Express response
    * @returns {Promise<void>} 201 with the created mover
    */
   createMover = async (req: Request, res: Response): Promise<void> => {
-    const { weightLimit } = req.body;
-    const mover = await this.moverService.createMover(weightLimit);
+    const { name, weightLimit } = req.body;
+    const mover = await this.moverService.createMover(name, weightLimit);
     sendSuccess(res, mover, undefined, StatusCodes.CREATED);
   };
 

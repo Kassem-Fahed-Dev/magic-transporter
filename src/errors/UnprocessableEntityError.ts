@@ -17,7 +17,7 @@ export class UnprocessableEntityError extends AppError {
   readonly statusCode = StatusCodes.UNPROCESSABLE_ENTITY;
   readonly isOperational = true;
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, code?: string) {
+    super(message, code);
   }
 }

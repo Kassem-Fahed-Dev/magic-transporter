@@ -11,10 +11,20 @@ import { body, param, query, ValidationChain } from "express-validator";
  *
  * @example
  * {
+ *   "name": "John the Brave",
  *   "weightLimit": 100
  * }
  */
 export const createMoverValidators: ValidationChain[] = [
+  body("name")
+    .exists()
+    .withMessage("Name is required")
+    .isString()
+    .withMessage("Name must be a string")
+    .trim()
+    .notEmpty()
+    .withMessage("Name cannot be empty"),
+
   body("weightLimit")
     .exists()
     .withMessage("Weight limit is required")

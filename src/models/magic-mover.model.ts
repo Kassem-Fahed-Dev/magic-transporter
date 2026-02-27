@@ -11,6 +11,7 @@ import { QuestState } from "../types/enums";
  *
  * @interface IMagicMover
  * @extends {Document}
+ * @property {string} name - The name of the mover
  * @property {number} weightLimit - The maximum total weight the mover can carry
  * @property {number} currentWeight - The current total weight of loaded items (for atomic operations)
  * @property {QuestState} questState - Current lifecycle state (resting, loading, on-mission)
@@ -18,6 +19,7 @@ import { QuestState } from "../types/enums";
  * @property {number} missionsCompleted - Running count of successfully completed missions
  */
 export interface IMagicMover extends Document {
+  name: string;
   weightLimit: number;
   currentWeight: number;
   questState: QuestState;
@@ -28,6 +30,11 @@ export interface IMagicMover extends Document {
 /** Mongoose schema definition for Magic Mover. */
 const MagicMoverSchema = new Schema<IMagicMover>(
   {
+    name: {
+      type: String,
+      required: [true, "Name is required"],
+      trim: true,
+    },
     weightLimit: {
       type: Number,
       required: [true, "Weight limit is required"],

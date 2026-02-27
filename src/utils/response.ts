@@ -45,25 +45,31 @@ export function sendSuccess(
  * @param res - Express response object
  * @param message - Error message
  * @param statusCode - HTTP status code (default: 500 Internal Server Error)
- * @param data - Optional additional error data
+ * @param errors - Optional validation errors array (for ValidationError)
+ * @param code - Optional error code for client-side error handling
  *
  * @example
  * sendError(res, "Resource not found", StatusCodes.NOT_FOUND);
- * sendError(res, "Validation failed", StatusCodes.BAD_REQUEST, validationErrors);
+ * sendError(res, "Validation failed", StatusCodes.BAD_REQUEST, validationErrors, "VALIDATION_ERROR");
  */
 export function sendError(
   res: Response,
   message: string,
   statusCode: number = StatusCodes.INTERNAL_SERVER_ERROR,
-  data?: any
+  errors?: any[],
+  code?: string
 ): void {
-  const response: { success: boolean; message: string; data?: any } = {
+  const response: { success: boolean; message: string; code?: string; errors?: any[] } = {
     success: false,
     message,
   };
 
-  if (data) {
-    response.data = data;
+  if (code) {
+    response.code = code;
+  }
+
+  if (errors && errors.length > 0) {
+    response.errors = errors;
   }
 
   res.status(statusCode).json(response);

@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { AppError } from "../errors";
 import { ValidationError } from "../errors";
+import { sendError } from "../utils/response";
 
 /**
  * Global error handling middleware.
@@ -42,19 +43,12 @@ export function errorHandler(
       if (err instanceof ValidationError && err.errors && err.errors.length > 0) {
         // Format validation errors into readable message
         const validationMessages = err.errors.map((e) => e.msg).join("; ");
-        res.status(err.statusCode).json({
-          success: false,
-          message: validationMessages || err.message,
-          errors: err.errors,
-        });
+        sendError(res, validationMessages || err.message, err.statusCode, err.errors, err.code);
         return;
       }
 
       // Standard operational error response
-      res.status(err.statusCode).json({
-        success: false,
-        message: err.message,
-      });
+      sendError(res, err.message, err.statusCode, undefined, err.code);
       return;
     } else {
       // Non-operational error (programming error or system failure)
@@ -66,10 +60,7 @@ export function errorHandler(
       });
 
       // Return generic message to client (don't expose internal details)
-      res.status(err.statusCode).json({
-        success: false,
-        message: "An unexpected error occurred. Please try again later.",
-      });
+      sendError(res, "An unexpected error occurred. Please try again later.", err.statusCode, undefined, "INTERNAL_ERROR");
       return;
     }
   }
@@ -83,8 +74,5 @@ export function errorHandler(
   });
 
   // Return generic 500 error
-  res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-    success: false,
-    message: "Internal Server Error",
-  });
+  sendError(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR, undefined, "INTERNAL_SERVER_ERROR");
 }

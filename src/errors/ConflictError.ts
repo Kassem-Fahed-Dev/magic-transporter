@@ -19,7 +19,7 @@ export class ConflictError extends AppError {
   readonly statusCode = StatusCodes.CONFLICT;
   readonly isOperational = true;
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, code?: string) {
+    super(message, code);
   }
 }

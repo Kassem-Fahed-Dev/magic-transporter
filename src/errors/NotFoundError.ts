@@ -18,7 +18,7 @@ export class NotFoundError extends AppError {
   readonly statusCode = StatusCodes.NOT_FOUND;
   readonly isOperational = true;
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, code?: string) {
+    super(message, code);
   }
 }

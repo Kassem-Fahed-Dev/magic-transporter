@@ -30,11 +30,12 @@ export class MoverService {
 
   /**
    * Creates a new Magic Mover.
+   * @param name - Name of the mover
    * @param weightLimit - Maximum weight the mover can carry
    * @returns The created mover
    */
-  async createMover(weightLimit: number): Promise<IMagicMover> {
-    return this.moverRepository.create(weightLimit);
+  async createMover(name: string, weightLimit: number): Promise<IMagicMover> {
+    return this.moverRepository.create(name, weightLimit);
   }
 
   /**

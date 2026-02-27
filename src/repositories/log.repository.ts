@@ -114,6 +114,6 @@ export class LogRepository {
       queryBuilder = queryBuilder.limit(filters.limit);
     }
 
-    return queryBuilder.populate("moverId").populate("items", "-assignedTo");
+    return queryBuilder.populate("moverId", "-items").populate("items", "-assignedTo");
   }
 }

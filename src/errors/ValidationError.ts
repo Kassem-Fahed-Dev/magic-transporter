@@ -24,8 +24,8 @@ export class ValidationError extends AppError {
    */
   public readonly errors?: any[];
 
-  constructor(message: string, errors?: any[]) {
-    super(message);
+  constructor(message: string, errors?: any[], code?: string) {
+    super(message, code);
     this.errors = errors;
   }
 }

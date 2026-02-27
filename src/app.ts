@@ -33,7 +33,10 @@ app.use("/api/activity-logs", logRoutes);
 
 /** Health check endpoint for monitoring and Docker health checks. */
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
+  res.json({
+    success: true,
+    data: { status: "ok" },
+  });
 });
 
 /** 404 handler for undefined routes — must be before error handler. */
@@ -41,7 +44,6 @@ app.use((req, res, _next) => {
   res.status(404).json({
     success: false,
     message: `Cannot ${req.method} ${req.originalUrl}`,
-    error: "Route not found",
   });
 });
 

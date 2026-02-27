@@ -29,11 +29,12 @@ export interface MoverQueryFilters {
 export class MoverRepository {
   /**
    * Creates a new Magic Mover.
+   * @param name - Name of the mover
    * @param weightLimit - Maximum weight the mover can carry
    * @returns The created Magic Mover document
    */
-  async create(weightLimit: number): Promise<IMagicMover> {
-    return MagicMover.create({ weightLimit });
+  async create(name: string, weightLimit: number): Promise<IMagicMover> {
+    return MagicMover.create({ name, weightLimit });
   }
 
   /**

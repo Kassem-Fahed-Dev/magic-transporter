@@ -19,7 +19,7 @@ export class BadRequestError extends AppError {
   readonly statusCode = StatusCodes.BAD_REQUEST;
   readonly isOperational = true;
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, code?: string) {
+    super(message, code);
   }
 }

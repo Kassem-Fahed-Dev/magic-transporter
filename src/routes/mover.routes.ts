@@ -24,7 +24,7 @@ const controller = container.resolve(MoverController);
  * /api/magic-movers:
  *   post:
  *     summary: Add a new Magic Mover
- *     description: Creates a Magic Mover with a weight limit. The mover starts in "resting" state with zero missions completed.
+ *     description: Creates a Magic Mover with a name and weight limit. The mover starts in "resting" state with zero missions completed.
  *     tags: [Magic Movers]
  *     requestBody:
  *       required: true
@@ -32,8 +32,12 @@ const controller = container.resolve(MoverController);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [weightLimit]
+ *             required: [name, weightLimit]
  *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the mover
+ *                 example: "John the Brave"
  *               weightLimit:
  *                 type: number
  *                 description: Maximum total weight the mover can carry
@@ -53,7 +57,7 @@ const controller = container.resolve(MoverController);
  *                 data:
  *                   $ref: '#/components/schemas/MagicMover'
  *       400:
- *         description: Validation error (invalid weight limit)
+ *         description: Validation error (invalid name or weight limit)
  *         content:
  *           application/json:
  *             schema:

@@ -19,7 +19,7 @@ export class InternalServerError extends AppError {
   readonly statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   readonly isOperational = false;
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, code?: string) {
+    super(message, code);
   }
 }

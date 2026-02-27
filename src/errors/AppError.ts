@@ -23,7 +23,13 @@ export abstract class AppError extends Error {
    */
   abstract readonly isOperational: boolean;
 
-  constructor(message: string) {
+  /**
+   * Optional error code for client-side error handling.
+   * Defaults to the class name (e.g., "NotFoundError", "ValidationError").
+   */
+  public readonly code: string;
+
+  constructor(message: string, code?: string) {
     super(message);
 
     // Maintains proper prototype chain for instanceof checks
@@ -34,5 +40,8 @@ export abstract class AppError extends Error {
 
     // Set the name to the class name for better error identification
     this.name = this.constructor.name;
+
+    // Set error code (use provided code or default to class name)
+    this.code = code || this.constructor.name;
   }
 }
